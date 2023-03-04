@@ -1,0 +1,6 @@
+[server]
+directory=path-to-your-open-mp-server-directory
+
+[watcher]
+directory=build
+files=libServer.so,anotherLib.so
