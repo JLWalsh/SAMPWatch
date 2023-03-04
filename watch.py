@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import configparser
+import shutil
 import subprocess
 import time
 from threading import Timer
@@ -53,6 +54,15 @@ def restart_server(server_process, config):
     server_process.kill()
     return start_server(config['server_dir'])
 
+def copy_file_to_server(file, config):
+    print(f'Copying {file} to {config["server_dir"]}')
+    shutil.copyfile(config['watch_dir'] + '/' + file, config['server_dir'] + '/components/' + file)
+
+def copy_all_files_to_server(config):
+    files = config['files']
+    for file in files:
+        copy_file_to_server(file, config)
+
 def start_file_watcher(process, config):
     event_handler = FileChangedHandler(process, config)
     observer = Observer()
@@ -79,6 +89,8 @@ class FileChangedHandler(FileSystemEventHandler):
             filename = event.src_path[len(self.config['watch_dir']) + 1:]
 
             if filename in self.config['files']:
+                copy_file_to_server(filename, self.config)
+
                 maybe_new_process = restart_server(self.server_process, self.config)
                 if maybe_new_process is not None:
                     self.server_process = maybe_new_process
@@ -86,6 +98,7 @@ class FileChangedHandler(FileSystemEventHandler):
 if __name__ == "__main__":
     config = read_config();
 
+    copy_all_files_to_server(config)
     process = start_server(config['server_dir'])
     start_file_watcher(process, config)
 
